@@ -1,20 +1,44 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 
-class TimePickerPage extends StatefulWidget {
-  @override
-  _TimePickerPageState createState() => _TimePickerPageState();
+void main() {
+  runApp(const MyApp());
 }
 
-class _TimePickerPageState extends State<TimePickerPage> {
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Time Picker Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const MyHomePage(title: 'Flutter Time Picker Home Page'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
   DateTime time = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Set Time'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
       ),
       body: Center(
         child: Column(
@@ -27,7 +51,6 @@ class _TimePickerPageState extends State<TimePickerPage> {
                 use24hFormat: false,
                 initialDateTime: time,
                 onDateTimeChanged: (DateTime newTime) {
-                  HapticFeedback.lightImpact(); // Provides physical feedback on scroll
                   setState(() {
                     time = newTime;
                   });
@@ -35,7 +58,10 @@ class _TimePickerPageState extends State<TimePickerPage> {
               ),
             ),
             SizedBox(height: 20),
-            Text('You shall be notified at: ${time.hour % 12}:${time.minute} ${time.hour >= 12 ? 'PM' : 'AM'}'),
+            Text(
+              'Selected Time: ${time.hour % 12}:${time.minute.toString().padLeft(2, '0')} ${time.hour >= 12 ? 'PM' : 'AM'}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
           ],
         ),
       ),
