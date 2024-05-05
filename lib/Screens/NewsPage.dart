@@ -15,8 +15,6 @@ class NewsPage extends StatefulWidget {
   final Set<String> selectedCategories;
   final DateTime time;
 
-// 8076a1e6bbfe9867f65cb33eb684aa11f5f60fca
-
   const NewsPage(this.selectedCategories, this.time, {super.key});
 
   @override
@@ -56,7 +54,6 @@ class _NewsPageState extends State<NewsPage> {
     final response =
         await http.post(Uri.parse(url), headers: headers, body: data);
 
-    // Check if the response is successful
     if (response.statusCode != 200) {
       throw Exception("HTTP error! Status: ${response.statusCode}");
     }
@@ -105,7 +102,6 @@ class _NewsPageState extends State<NewsPage> {
                             child: Column(
                               children: <Widget>[
                                 Expanded(
-                                  // Wrap the Image.network with an Expanded widget
                                   child: Image.network(
                                     news['thumbnail'],
                                     fit: BoxFit.cover,
@@ -120,67 +116,115 @@ class _NewsPageState extends State<NewsPage> {
 
                 return Column(
                   children: <Widget>[
-                    CarouselSlider(
-                      items: newsCards,
-                      options: CarouselOptions(
-                          aspectRatio: 16 / 9,
-                          viewportFraction: 0.9,
-                          initialPage: 0,
-                          enableInfiniteScroll: true,
-                          reverse: false,
-                          autoPlay: false,
-                          enlargeCenterPage: true,
-                          scrollDirection: Axis.horizontal,
-                          onPageChanged: (index, res) {
-                            setState(() {
-                              _currentNews = index;
-                            });
-                          }),
+                    Container(
+                      height: MediaQuery.of(context).size.height *
+                          0.6, // Adjust this value as needed
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          CarouselSlider(
+                            items: newsCards,
+                            options: CarouselOptions(
+                              aspectRatio: 16 / 9,
+                              viewportFraction: 0.9,
+                              initialPage: 0,
+                              enableInfiniteScroll: true,
+                              reverse: false,
+                              autoPlay: false,
+                              enlargeCenterPage: true,
+                              scrollDirection: Axis.horizontal,
+                              onPageChanged: (index, res) {
+                                setState(() {
+                                  _currentNews = index;
+                                });
+                              },
+                            ),
+                          ),
+                          Container(
+                            margin: new EdgeInsets.all(30),
+                            child: 
+                          Text(
+                              categoryNews[_currentNews]['title'],
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          FutureBuilder(
+                            future: getTextToSpeech(
+                              categoryNews[_currentNews]['short_response'],
+                              _currentNews.toString(),
+                            ),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                final player = AudioPlayer();
+                                player.setFilePath(snapshot.data!.path);
+                                print(snapshot.data!.path);
+                                player.load();
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    IconButton(
+                                      icon: const Icon(Icons.play_circle_fill),
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.all<Color>(
+                                                Colors.white),
+                                        iconSize:
+                                            MaterialStateProperty.all(35.0),
+                                      ),
+                                      onPressed: () {
+                                        player.play();
+                                      },
+                                    ),
+                                    const SizedBox(width: 20),
+                                    IconButton(
+                                      icon: const Icon(Icons.pause),
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.all<Color>(
+                                                Colors.white),
+                                        iconSize:
+                                            MaterialStateProperty.all(35.0),
+                                      ),
+                                      onPressed: () {
+                                        player.pause();
+                                      },
+                                    ),
+                                    const SizedBox(width: 20),
+                                    IconButton(
+                                      icon:
+                                          const Icon(Icons.stop_circle_rounded),
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.all<Color>(
+                                                Colors.white),
+                                        iconSize:
+                                            MaterialStateProperty.all(35.0),
+                                      ),
+                                      onPressed: () {
+                                        player.stop();
+                                      },
+                                    ),
+                                  ],
+                                );
+                              } else if (snapshot.hasError) {
+                                return Text(
+                                  "${snapshot.error}",
+                                  style: TextStyle(color: Colors.white),
+                                );
+                              } else {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    Text(
-                      categoryNews[_currentNews]['title'],
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                    FutureBuilder(
-                        future: getTextToSpeech(
-                            categoryNews[_currentNews]['short_response'],
-                            _currentNews.toString()),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            final player = AudioPlayer();
-                            player.setFilePath(snapshot.data!.path);
-                            player.load();
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                IconButton(
-                                  icon: const Icon(Icons.play_arrow),
-                                  onPressed: () {
-                                    player.play();
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.pause),
-                                  onPressed: () {
-                                    player.pause();
-                                  },
-                                ),
-                              ],
-                            );
-                          } else if (snapshot.hasError) {
-                            return Text(
-                              "${snapshot.error}",
-                              style: TextStyle(color: Colors.white),
-                            );
-                          } else {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                        }),
                   ],
                 );
               } else {
