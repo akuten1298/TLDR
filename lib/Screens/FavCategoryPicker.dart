@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tldr/Screens/time_picker_page.dart';
 
 class CategoryPicker extends StatefulWidget {
   @override
@@ -66,10 +67,7 @@ class _CircularCategoricalPickerState extends State<CategoryPicker> {
                       borderRadius: BorderRadius.circular(100),
                       gradient: LinearGradient(
                         colors: isSelected
-                            ? [
-                                const Color(0xFFB12496),
-                                const Color(0xFFF47D65),
-                              ]
+                            ? [Color(0xFFB12496), Color(0xFFF47D65)]
                             : [
                                 const Color(0xFF31302B),
                                 const Color(0xFF31302B),
@@ -95,7 +93,12 @@ class _CircularCategoricalPickerState extends State<CategoryPicker> {
               return IgnorePointer(
                 ignoring: selectedCategories.length < 3,
                 child: GestureDetector(
-                  onTap: () => print(selectedCategories),
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return TimePickerPage(selectedCategories);
+                    }));
+                  },
                   child: Container(
                     margin: const EdgeInsets.all(13),
                     padding: const EdgeInsets.all(13),

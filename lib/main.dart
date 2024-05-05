@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:tldr/Screens/CategoryPicker.dart';
+import 'package:tldr/Screens/FavCategoryPicker.dart';
 
 import 'Screens/HomePage.dart';
 
@@ -14,7 +14,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Flutter Time Picker Demo',
       home: MyHomePage(title: 'TLDR'),
       debugShowCheckedModeBanner: false,
     );
