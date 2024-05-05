@@ -1,12 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:category_navigator/category_navigator.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:tldr/Widgets/CustomAppBar.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:tldr/Screens/playlist.dart';
+import 'package:path_provider/path_provider.dart';
 
 class NewsPage extends StatefulWidget {
   final Set<String> selectedCategories;
@@ -23,6 +26,7 @@ class NewsPage extends StatefulWidget {
 class _NewsPageState extends State<NewsPage> {
   var _current = 0;
   var _currentNews = 0;
+
   List<String> get selectedCategories => widget.selectedCategories.toList();
 
   Future<List<dynamic>> getNews() async {
@@ -32,7 +36,36 @@ class _NewsPageState extends State<NewsPage> {
     return newsData;
   }
 
-  // Future<void> getMP3() async {}
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> getTextToSpeech(String text, String newsNo) async {
+    final url = "https://api.deepgram.com/v1/speak?model=aura-asteria-en";
+    const apiKey = "8076a1e6bbfe9867f65cb33eb684aa11f5f60fca";
+    final data = jsonEncode({
+      "text": text,
+    });
+
+    final headers = {
+      HttpHeaders.authorizationHeader: "Token $apiKey",
+      HttpHeaders.contentTypeHeader: "application/json",
+    };
+
+    final response =
+        await http.post(Uri.parse(url), headers: headers, body: data);
+
+    // Check if the response is successful
+    if (response.statusCode != 200) {
+      throw Exception("HTTP error! Status: ${response.statusCode}");
+    }
+
+    final path = await _localPath;
+    final file = File('$path/audio$newsNo.mp3');
+    await file.writeAsBytes(response.bodyBytes);
+    return file;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,23 +96,24 @@ class _NewsPageState extends State<NewsPage> {
                   }
                 }
 
-                final List<Card> newsCards = categoryNews!
-                    .map((news) => Card(
-                          color: Colors.transparent,
-                          child: Column(
-                            children: <Widget>[
-                              Image.network(
-                                news['thumbnail'],
-                                fit: BoxFit.cover,
-                              ),
-                              // Text(
-                              //   news['title'],
-                              //   style: const TextStyle(
-                              //       fontSize: 18,
-                              //       fontWeight: FontWeight.bold,
-                              //       color: Colors.white),
-                              // ),
-                            ],
+                final List<SizedBox> newsCards = categoryNews!
+                    .map((news) => SizedBox(
+                          width: MediaQuery.of(context).size.width,
+                          child: Card(
+                            margin: const EdgeInsets.only(top: 10),
+                            color: Colors.white,
+                            child: Column(
+                              children: <Widget>[
+                                Expanded(
+                                  // Wrap the Image.network with an Expanded widget
+                                  child: Image.network(
+                                    news['thumbnail'],
+                                    fit: BoxFit.cover,
+                                    width: MediaQuery.of(context).size.width,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ))
                     .toList();
@@ -89,9 +123,8 @@ class _NewsPageState extends State<NewsPage> {
                     CarouselSlider(
                       items: newsCards,
                       options: CarouselOptions(
-                          height: MediaQuery.of(context).size.height * 0.4,
                           aspectRatio: 16 / 9,
-                          viewportFraction: 0.8,
+                          viewportFraction: 0.9,
                           initialPage: 0,
                           enableInfiniteScroll: true,
                           reverse: false,
@@ -111,6 +144,43 @@ class _NewsPageState extends State<NewsPage> {
                           fontWeight: FontWeight.bold,
                           color: Colors.white),
                     ),
+                    FutureBuilder(
+                        future: getTextToSpeech(
+                            categoryNews[_currentNews]['short_response'],
+                            _currentNews.toString()),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            final player = AudioPlayer();
+                            player.setFilePath(snapshot.data!.path);
+                            player.load();
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                IconButton(
+                                  icon: const Icon(Icons.play_arrow),
+                                  onPressed: () {
+                                    player.play();
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.pause),
+                                  onPressed: () {
+                                    player.pause();
+                                  },
+                                ),
+                              ],
+                            );
+                          } else if (snapshot.hasError) {
+                            return Text(
+                              "${snapshot.error}",
+                              style: TextStyle(color: Colors.white),
+                            );
+                          } else {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                        }),
                   ],
                 );
               } else {
@@ -119,43 +189,7 @@ class _NewsPageState extends State<NewsPage> {
                 );
               }
             },
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) {
-                  return MyApp();
-                }),
-                (Route<dynamic> route) => false,
-              );
-            },
-            child: Container(
-              width: double.infinity,
-              height: 50,
-              margin: const EdgeInsets.all(13),
-              decoration: BoxDecoration(
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.circular(100),
-                gradient: const LinearGradient(
-                  colors: [
-                    // Color(0xFF31302B),
-                    Color(0xFFB12496),
-                    Color(0xFFF47D65)
-                  ],
-                ),
-              ),
-              child: const Center(
-                child: Text(
-                  "Next",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          )
         ],
       ),
     );
