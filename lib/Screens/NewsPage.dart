@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:category_navigator/category_navigator.dart';
 import 'package:tldr/Widgets/CustomAppBar.dart';
 import 'package:flutter/services.dart';
+import 'package:tldr/Screens/playlist.dart';
 
 class NewsPage extends StatefulWidget {
   final Set<String> selectedCategories;
@@ -60,12 +61,45 @@ class _NewsPageState extends State<NewsPage> {
                 );
               }
             },
-          )
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) {
+                  return MyApp();
+                }),
+                (Route<dynamic> route) => false,
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              height: 50,
+              margin: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(100),
+                gradient: const LinearGradient(
+                  colors: [
+                    // Color(0xFF31302B),
+                    Color(0xFFB12496),
+                    Color(0xFFF47D65)
+                  ],
+                ),
+              ),
+              child: const Center(
+                child: Text(
+                  "Next",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
-
-// 8076a1e6bbfe9867f65cb33eb684aa11f5f60fca
