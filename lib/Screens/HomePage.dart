@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tldr/Screens/FavCategoryPicker.dart';
-import 'package:tldr/Screens/time_picker_page.dart';
 import 'package:tldr/Widgets/CustomAppBar.dart';
 
 class MyHomePage extends StatefulWidget {

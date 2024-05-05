@@ -4,12 +4,12 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:category_navigator/category_navigator.dart';
 import 'package:tldr/Widgets/CustomAppBar.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 class NewsPage extends StatefulWidget {
   final Set<String> selectedCategories;
   final DateTime time;
-  
+
 // 8076a1e6bbfe9867f65cb33eb684aa11f5f60fca
 
   const NewsPage(this.selectedCategories, this.time, {super.key});
@@ -19,15 +19,18 @@ class NewsPage extends StatefulWidget {
 }
 
 class _NewsPageState extends State<NewsPage> {
-
   var _current = 0;
+  var _currentNews = 0;
+  List<String> get selectedCategories => widget.selectedCategories.toList();
 
-  Future<Map<String, dynamic>> getNews() async {
-    final String jsonString =
-        await rootBundle.loadString('lib/Assets/SampleJSON.json');
-    final Map<String, dynamic> newsData = jsonDecode(jsonString);
+  Future<List<dynamic>> getNews() async {
+    final response = await http.get(Uri.parse(
+        'https://ed88-2601-602-867e-2e00-597-4f65-e76c-1a3d.ngrok-free.app/all'));
+    List<dynamic> newsData = jsonDecode(response.body);
     return newsData;
   }
+
+  // Future<void> getMP3() async {}
 
   @override
   Widget build(BuildContext context) {
@@ -37,21 +40,75 @@ class _NewsPageState extends State<NewsPage> {
       body: ListView(
         children: <Widget>[
           CategoryNavigator(
-              labels: widget.selectedCategories.toList(), 
+              labels: widget.selectedCategories.toList(),
               defaultActiveItem: 0,
               onChange: (value) {
-                print(value);
-                _current = value;
+                setState(() {
+                  _current = value;
+                });
               }),
           FutureBuilder(
             future: getNews(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                final Map<String, dynamic> newsData =
-                    snapshot.data as Map<String, dynamic>;
+                final List<dynamic> newsData = snapshot.data as List<dynamic>;
+                List<dynamic>? categoryNews;
+
+                for (var category in newsData) {
+                  if (category['category'] == selectedCategories[_current]) {
+                    categoryNews = category['value'];
+                    break;
+                  }
+                }
+
+                final List<Card> newsCards = categoryNews!
+                    .map((news) => Card(
+                          color: Colors.transparent,
+                          child: Column(
+                            children: <Widget>[
+                              Image.network(
+                                news['thumbnail'],
+                                fit: BoxFit.cover,
+                              ),
+                              // Text(
+                              //   news['title'],
+                              //   style: const TextStyle(
+                              //       fontSize: 18,
+                              //       fontWeight: FontWeight.bold,
+                              //       color: Colors.white),
+                              // ),
+                            ],
+                          ),
+                        ))
+                    .toList();
+
                 return Column(
                   children: <Widget>[
-                    Text("data"),
+                    CarouselSlider(
+                      items: newsCards,
+                      options: CarouselOptions(
+                          height: MediaQuery.of(context).size.height * 0.4,
+                          aspectRatio: 16 / 9,
+                          viewportFraction: 0.8,
+                          initialPage: 0,
+                          enableInfiniteScroll: true,
+                          reverse: false,
+                          autoPlay: false,
+                          enlargeCenterPage: true,
+                          scrollDirection: Axis.horizontal,
+                          onPageChanged: (index, res) {
+                            setState(() {
+                              _currentNews = index;
+                            });
+                          }),
+                    ),
+                    Text(
+                      categoryNews[_currentNews]['title'],
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
                   ],
                 );
               } else {
@@ -66,6 +123,5 @@ class _NewsPageState extends State<NewsPage> {
     );
   }
 }
-
 
 // 8076a1e6bbfe9867f65cb33eb684aa11f5f60fca
